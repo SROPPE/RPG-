@@ -5,11 +5,55 @@ using RPG.Stats;
 using UnityEngine;
 using UnityEngine.Events;
 
+
+public class HealthModel
+{
+    private readonly string _id;
+    private readonly int _maxAmount;
+
+    private int _amount;
+
+    public int Amount => _amount;
+
+    public HealthModel(int amount, int maxAmount, string id)
+    {
+        _id = id;
+        _maxAmount = maxAmount;
+        _amount = amount;
+    }
+
+    public void TakeDamage(int amount)
+    {
+        healthPoints.value = Mathf.Max(healthPoints.value - damageValue, 0);
+        takeDamage.Invoke(damageValue);
+        if (healthPoints.value == 0)
+        {
+            onDie?.Invoke();
+            ExperienceReward();
+            Death();
+        }
+    }
+
+    public void Regenerate(int amount)
+    {
+
+    }
+
+    private class Preconditions
+    {
+        public static void ShouldBeGreaterZero(int amount)
+        {
+          
+        }
+    }
+}
+
 namespace RPG.Combat
 {
     public class HealthSystem : MonoBehaviour, ISaveable
     {
         [SerializeField] LazyValue<float> healthPoints;
+
         public TakeDamageEvent takeDamage;
         public UnityEvent onDie;
         [System.Serializable]
@@ -19,30 +63,36 @@ namespace RPG.Combat
         BaseStats stats;
         LazyValue<float> maxHP;
         bool isDead = false;
+
         private void Awake()
         {
             stats = GetComponent<BaseStats>();
             healthPoints = new LazyValue<float>(SetHealth);
             maxHP = new LazyValue<float>(SetHealth);
         }
+
         private float SetHealth()
         {
             return stats.GetStat(Stat.Health);
         }
+
         private void Start()
         {
             healthPoints.ForceInit();
             maxHP.ForceInit();
             if (healthPoints.value <= 0) return;
         }
+
         private void OnEnable()
         {
             stats.onLevelUp += RegenerateHealth;
         }
+
         private void OnDisable()
         {
             stats.onLevelUp -= RegenerateHealth;
         }
+
         private void RegenerateHealth()
         {
             if (stats)
@@ -50,10 +100,12 @@ namespace RPG.Combat
                 maxHP.value = healthPoints.value = stats.GetStat(Stat.Health);
             }
         }
+
         public int GetNormilizedHP()
         {
             return (int)Mathf.Round((healthPoints.value / maxHP.value) * 100);
         }
+
         public void TakeDamage(float damageValue)
         {
             if (!isDead)
